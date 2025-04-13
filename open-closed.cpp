@@ -2,6 +2,9 @@
 #include <memory>
 #include <vector>
 
+// Abstract interface representing a general Notification.
+// This interface is open for extension: new notification types can be added by implementing this interface,
+// while the code relying on Notification (e.g., notifyAll function) does not need to change.
 class Notification
 {
 public:
@@ -9,6 +12,8 @@ public:
     virtual ~Notification() = default;
 };
 
+// Concrete implementation of Notification for sending email notifications.
+// New notification types can be added as additional classes implementing Notification.
 class EmailNotification : public Notification
 {
 public:
@@ -36,6 +41,9 @@ public:
     }
 };
 
+// The notifyAll function is closed for modification but open for extension.
+// It works with the abstract Notification interface, so if you add new notification types,
+// you do not need to modify this function.
 void notifyAll(const std::vector<std::unique_ptr<Notification>> &notifications, const std::string &message)
 {
     for (const auto &notification : notifications)
@@ -51,6 +59,8 @@ int main()
     notifications.push_back(std::make_unique<SMSNotification>());
     notifications.push_back(std::make_unique<PushNotification>());
 
+    // The notifyAll function uses polymorphism to call the appropriate send() method.
+    // There is no need to modify notifyAll if a new notification type is added.
     notifyAll(notifications, "You have a new notification!");
 
     return 0;
