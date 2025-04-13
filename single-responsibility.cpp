@@ -1,88 +1,99 @@
 #include <iostream>
 #include <memory>
+#include <string>
 
-// Interfaces
+// Define individual interfaces for each responsibility
 class IPrinter
 {
 public:
-  virtual void print(const std::string &doc) = 0;
-  virtual ~IPrinter() = default;
+    virtual void print(const std::string &doc) = 0;
+    virtual ~IPrinter() = default;
 };
 
 class IScanner
 {
 public:
-  virtual void scan(const std::string &doc) = 0;
-  virtual ~IScanner() = default;
+    virtual void scan(const std::string &doc) = 0;
+    virtual ~IScanner() = default;
 };
 
 class IFax
 {
 public:
-  virtual void fax(const std::string &doc) = 0;
-  virtual ~IFax() = default;
+    virtual void fax(const std::string &doc) = 0;
+    virtual ~IFax() = default;
 };
 
-class IDevice
-{
-public:
-  virtual std::string getInfo() const = 0;
-  virtual ~IDevice() = default;
-};
-
-// Implementations
+// Implementations with a single responsibility
 class Printer : public IPrinter
 {
 public:
-  void print(const std::string &doc) override
-  {
-    std::cout << "Printing: " << doc << std::endl;
-  }
+    void print(const std::string &doc) override
+    {
+        std::cout << "Printing: " << doc << std::endl;
+    }
 };
 
 class Scanner : public IScanner
 {
 public:
-  void scan(const std::string &doc) override
-  {
-    std::cout << "Scanning: " << doc << std::endl;
-  }
+    void scan(const std::string &doc) override
+    {
+        std::cout << "Scanning: " << doc << std::endl;
+    }
 };
 
 class Fax : public IFax
 {
 public:
-  void fax(const std::string &doc) override
-  {
-    std::cout << "Faxing: " << doc << std::endl;
-  }
+    void fax(const std::string &doc) override
+    {
+        std::cout << "Faxing: " << doc << std::endl;
+    }
 };
 
-class PrintScanDevice : public Printer, public Scanner, public IDevice
+// Composite class that combines the separate responsibilities
+// This class adheres to the Single Responsibility Principle by delegating
+// each function (print, scan, fax) to its dedicated component.
+class MultifunctionDevice
 {
 public:
-  std::string getInfo() const override { return "Print & Scan Device"; }
-};
+    MultifunctionDevice(std::unique_ptr<IPrinter> printer, std::unique_ptr<IScanner> scanner, std::unique_ptr<IFax> fax)
+        : printer_(std::move(printer)), scanner_(std::move(scanner)), fax_(std::move(fax)) {}
 
-class PrintFaxDevice : public Printer, public Fax, public IDevice
-{
-public:
-  std::string getInfo() const override { return "Print & Fax Device"; }
+    void print(const std::string &document)
+    {
+        printer_->print(document);
+    }
+    void scan(const std::string &document)
+    {
+        scanner_->scan(document);
+    }
+    void fax(const std::string &document)
+    {
+        fax_->fax(document);
+    }
+
+private:
+    std::unique_ptr<IPrinter> printer_;
+    std::unique_ptr<IScanner> scanner_;
+    std::unique_ptr<IFax> fax_;
 };
 
 int main()
 {
-  std::unique_ptr<PrintScanDevice> classicPrinter =
-      std::make_unique<PrintScanDevice>();
-  std::cout << classicPrinter->getInfo() << std::endl;
-  classicPrinter->print("Document A");
-  classicPrinter->scan("Document A");
+    // Create basic components with single responsibilities:
+    auto printer = std::make_unique<Printer>();
+    auto scanner = std::make_unique<Scanner>();
+    auto fax = std::make_unique<Fax>();
 
-  std::unique_ptr<PrintFaxDevice> classicFax =
-      std::make_unique<PrintFaxDevice>();
-  std::cout << classicFax->getInfo() << std::endl;
-  classicFax->print("Document B");
-  classicFax->fax("Document B");
+    // Compose a multifunction device from the individual components.
+    MultifunctionDevice device(std::move(printer), std::move(scanner), std::move(fax));
 
-  return 0;
+    // Each operation is delegated to the component that has the related responsibility.
+    device.print("Document A");
+    device.scan("Document A");
+    device.fax("Document A");
+
+    return 0;
 }
